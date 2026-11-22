@@ -125,5 +125,9 @@ jobs:
       - name: Push image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          docker push "${IMAGE_NAME}:${GITHUB_SHA}"
-          docker push "${IMAGE_NAME}:latest"
+          docker push "${IMAGE_NAME}:${GITHUB_SHA}" | tee push-sha.log
+          docker push "${IMAGE_NAME}:latest" | tee push-latest.log
+          echo "=== Digest для тега SHA ==="
+          grep -o 'digest: sha256:[a-f0-9]*' push-sha.log || true
+          echo "=== Digest для тега latest ==="
+          grep -o 'digest: sha256:[a-f0-9]*' push-latest.log || true
