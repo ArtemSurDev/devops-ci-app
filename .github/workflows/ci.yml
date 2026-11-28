@@ -150,6 +150,10 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Pull image on VM with correct platform
+        run: |
+          ssh -i ~/.ssh/devops_vm devops@$VM_HOST "sudo docker pull --platform linux/amd64 ghcr.io/artemsurdev/devops-ci-app:${{ github.sha }}"
+
       - name: Deploy with Ansible
         working-directory: ansible
         run: |
