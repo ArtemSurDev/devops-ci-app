@@ -1,0 +1,39 @@
+---
+- name: Verify VM state
+  hosts: vm
+  become: true
+  tasks:
+    - name: Check effective sshd configuration
+      ansible.builtin.command: sshd -T
+      register: sshd_config
+      changed_when: false
+      failed_when: sshd_config.rc != 0
+
+    - name: Assert PasswordAuthentication is disabled
+      ansible.builtin.assert:
+        that:
+          - "'passwordauthentication no' in sshd_config.stdout"
+        fail_msg: "SSH password authentication is enabled!"
+
+    - name: Check container is running
+      community.docker.docker_container_info:
+        name: "{{ app_container_name }}"
+      register: container_info
+
+    - name: Assert container is running
+      ansible.builtin.assert:
+        that:
+          - container_info.container.State.Running == true
+        fail_msg: "Container {{ app_container_name }} is not running!"
+
+    - name: Check application health
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ app_host_port }}/health"
+        return_content: true
+      register: health_check
+
+    - name: Assert health status is ok
+      ansible.builtin.assert:
+        that:
+          - health_check.json.status == "ok"
+        fail_msg: "Health check failed!"
