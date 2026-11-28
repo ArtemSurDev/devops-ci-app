@@ -1,0 +1,5 @@
+app_image: "ghcr.io/artemsurdev/devops-ci-app"
+app_tag: "fd08ddfcf4830fc11908c744ff828f283b92b307"
+app_container_name: "devops-ci-app"
+app_host_port: 5000
+app_internal_port: 5000

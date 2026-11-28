@@ -131,3 +131,30 @@ jobs:
           grep -o 'digest: sha256:[a-f0-9]*' push-sha.log || true
           echo "=== Digest для тега latest ==="
           grep -o 'digest: sha256:[a-f0-9]*' push-latest.log || true
+
+
+  deploy:
+    needs: image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, devops-vm]
+    permissions:
+      contents: read
+    concurrency:
+      group: deploy-devops-vm
+      cancel-in-progress: false
+    env:
+      VM_HOST: 192.168.56.2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Deploy with Ansible
+        working-directory: ansible
+        run: |
+          ansible-playbook -i inventory/prod.ini site.yml -e app_tag=${{ github.sha }}
+
+      - name: Check through Nginx
+        run: |
+          curl --fail --silent --show-error http://$VM_HOST/health
